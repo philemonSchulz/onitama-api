@@ -9,11 +9,14 @@ import org.springframework.stereotype.Service;
 
 import com.example.Exceptions.GameAlreadyStartedException;
 import com.example.Exceptions.GameNotFoundException;
+import com.example.aimodels.RandomAi;
 import com.example.springapi.model.Board;
 import com.example.springapi.model.Game;
+import com.example.springapi.model.MoveObject;
 import com.example.springapi.model.Player;
 import com.example.springapi.model.Game.GameState;
 import com.example.springapi.model.Player.AiType;
+import com.example.springapi.model.Player.PlayerColor;
 
 @Service
 public class GameService {
@@ -25,13 +28,15 @@ public class GameService {
         games = new HashMap<>();
     }
 
+    /*
+     * Methods for Rest API from here:
+     */
+
     public Game createClientGame() {
         String gameId = "ClientGame" + gameIndex++;
-        Game game = new Game();
-        game.setId(gameId);
+        Game game = new Game(gameId);
         game.setPlayerRed(new Player(Player.PlayerColor.RED));
-        game.setState(GameState.WAITING_FOR_PLAYERS);
-        game.setBoard(new Board());
+        game.setGameState(GameState.WAITING_FOR_PLAYERS);
 
         games.put(gameId, game);
         return game;
@@ -39,17 +44,20 @@ public class GameService {
 
     public Game createAiGame(AiType aiType) {
         String gameId = "AiGame" + gameIndex++;
-        Game game = new Game();
-        game.setId(gameId);
+        Game game = new Game(gameId);
         game.setPlayerRed(new Player(Player.PlayerColor.RED));
         game.setPlayerBlue(new Player(Player.PlayerColor.BLUE, aiType));
-        game.setBoard(new Board());
         game.setBeginTime(System.currentTimeMillis());
-        game.setState(GameState.IN_PROGRESS);
-        game.setCurrentPlayer(game.getBoard().getNextCard().getColor() == Player.PlayerColor.RED ? game.getPlayerRed()
+        game.setGameState(GameState.IN_PROGRESS);
+        game.setCurrentPlayer(game.getNextCard().getColor() == Player.PlayerColor.RED ? game.getPlayerRed()
                 : game.getPlayerBlue());
 
         games.put(gameId, game);
+
+        if (game.getCurrentPlayer().getColor() == PlayerColor.BLUE) {
+            playAiMove(game);
+        }
+
         return game;
     }
 
@@ -58,18 +66,56 @@ public class GameService {
         if (game == null) {
             throw new GameNotFoundException("Didn't find game with id: " + gameId);
         }
-        if (game.getState() != GameState.WAITING_FOR_PLAYERS) {
+        if (game.getGameState() != GameState.WAITING_FOR_PLAYERS) {
             throw new GameAlreadyStartedException("Game with id: " + gameId + " is not waiting for players");
         }
 
         game.setPlayerBlue(new Player(Player.PlayerColor.BLUE));
         game.setBeginTime(System.currentTimeMillis());
-        game.setState(GameState.IN_PROGRESS);
-        game.setCurrentPlayer(game.getBoard().getNextCard().getColor() == Player.PlayerColor.RED ? game.getPlayerRed()
+        game.setGameState(GameState.IN_PROGRESS);
+        game.setCurrentPlayer(game.getNextCard().getColor() == Player.PlayerColor.RED ? game.getPlayerRed()
                 : game.getPlayerBlue());
 
         return game;
     }
+
+    /*
+     * Methods for Game Logic from here:
+     */
+
+    private void processMove(Game game, MoveObject move) {
+
+    }
+
+    private void switchTurn(Game game) {
+        game.setCurrentPlayer(game.getCurrentPlayer().getColor() == Player.PlayerColor.RED ? game.getPlayerBlue()
+                : game.getPlayerRed());
+        game.setTurnStartTime(System.currentTimeMillis());
+    }
+
+    private void playAiMove(Game game) {
+        if (game.getGameState() == GameState.IN_PROGRESS && game.getPlayerBlue().isAi()) {
+            MoveObject move = generateAiMove(game);
+            processMove(game, move);
+            switchTurn(game);
+        }
+    }
+
+    private MoveObject generateAiMove(Game game) {
+        switch (game.getPlayerBlue().getAiType()) {
+            case RANDOM:
+                return RandomAi.getMove(game, Player.PlayerColor.BLUE, false);
+            case RANDOM_PRIOTIZING:
+                return RandomAi.getMove(game, Player.PlayerColor.BLUE, true);
+            case MCTS:
+            default:
+                return RandomAi.getMove(game, Player.PlayerColor.BLUE, false);
+        }
+    }
+
+    /*
+     * Setter and Getter from here:
+     */
 
     public Game getGameById(String gameId) {
         return games.get(gameId);
