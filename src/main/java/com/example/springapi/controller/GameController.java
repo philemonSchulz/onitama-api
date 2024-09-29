@@ -6,16 +6,19 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.Exceptions.GameAlreadyStartedException;
-import com.example.Exceptions.GameNotFoundException;
+import com.example.exceptions.GameAlreadyStartedException;
+import com.example.exceptions.GameNotFoundException;
 import com.example.service.GameService;
 import com.example.springapi.model.Game;
+import com.example.springapi.model.MoveObject;
 import com.example.springapi.model.Player.AiType;
+import com.example.springapi.model.Player.PlayerColor;
 
 @RestController
 @RequestMapping("/game")
@@ -58,5 +61,36 @@ public class GameController {
     public ResponseEntity<Map<String, Game>> getGames() {
         Map<String, Game> games = gameService.getGames();
         return ResponseEntity.ok(games);
+    }
+
+    @PostMapping("/{gameId}/move")
+    public ResponseEntity<String> submitMove(@PathVariable String gameId, @RequestParam MoveObject move,
+            @RequestParam String playerColor) {
+        Game game = gameService.getGameById(gameId);
+
+        if (game == null) {
+            return ResponseEntity.status(404).body("Game not found.");
+        }
+
+        if (!gameService.isPlayerTurn(gameId, PlayerColor.valueOf(playerColor))) {
+            return ResponseEntity.status(403).body("It's not your turn.");
+        }
+
+        if (gameService.hasTimeExpired(game)) {
+            return ResponseEntity.status(408).body("Time has expired.");
+        }
+
+        boolean isValidMove = gameService.processMove(game, move);
+        if (!isValidMove) {
+            return ResponseEntity.badRequest().body("Move not valid.");
+        }
+
+        gameService.switchTurn(game);
+
+        if (game.getCurrentPlayer().isAi()) {
+            gameService.playAiMove(game);
+        }
+
+        return ResponseEntity.ok("Move accepted.");
     }
 }

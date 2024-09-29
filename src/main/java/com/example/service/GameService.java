@@ -5,11 +5,14 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessageType;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import com.example.Exceptions.GameAlreadyStartedException;
-import com.example.Exceptions.GameNotFoundException;
 import com.example.aimodels.RandomAi;
+import com.example.exceptions.GameAlreadyStartedException;
+import com.example.exceptions.GameNotFoundException;
 import com.example.springapi.model.Board;
 import com.example.springapi.model.Game;
 import com.example.springapi.model.MoveObject;
@@ -23,6 +26,9 @@ public class GameService {
 
     private HashMap<String, Game> games;
     private int gameIndex = 0;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     public GameService() {
         games = new HashMap<>();
@@ -83,17 +89,19 @@ public class GameService {
      * Methods for Game Logic from here:
      */
 
-    private void processMove(Game game, MoveObject move) {
-
+    public boolean processMove(Game game, MoveObject move) {
+        return true;
     }
 
-    private void switchTurn(Game game) {
+    public void switchTurn(Game game) {
         game.setCurrentPlayer(game.getCurrentPlayer().getColor() == Player.PlayerColor.RED ? game.getPlayerBlue()
                 : game.getPlayerRed());
         game.setTurnStartTime(System.currentTimeMillis());
+
+        messagingTemplate.convertAndSend("/topic/game-state/" + game.getGameId(), game);
     }
 
-    private void playAiMove(Game game) {
+    public void playAiMove(Game game) {
         if (game.getGameState() == GameState.IN_PROGRESS && game.getPlayerBlue().isAi()) {
             MoveObject move = generateAiMove(game);
             processMove(game, move);
@@ -111,6 +119,16 @@ public class GameService {
             default:
                 return RandomAi.getMove(game, Player.PlayerColor.BLUE, false);
         }
+    }
+
+    public boolean isPlayerTurn(String gameId, PlayerColor playerColor) {
+        Game game = games.get(gameId);
+        return game.getCurrentPlayer().getColor() == playerColor;
+    }
+
+    public boolean hasTimeExpired(Game game) {
+        long elapsedTime = System.currentTimeMillis() - game.getTurnStartTime();
+        return elapsedTime > 30000;
     }
 
     /*

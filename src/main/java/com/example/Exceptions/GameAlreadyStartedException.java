@@ -1,4 +1,4 @@
-package com.example.Exceptions;
+package com.example.exceptions;
 
 public class GameAlreadyStartedException extends RuntimeException {
     public GameAlreadyStartedException(String message) {
