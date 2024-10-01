@@ -1,10 +1,6 @@
 package com.example.springapi.model;
 
-import java.util.ArrayList;
-
-import com.example.service.CardCreator;
 import com.example.springapi.model.Piece.PieceType;
-import com.example.springapi.model.Player.PlayerColor;
 
 public class Board {
     public static final int BOARD_SIZE = 7;

@@ -1,6 +1,8 @@
 package com.example.springapi.model;
 
 import com.example.springapi.model.Player.PlayerColor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Tile {
     private int x;
@@ -8,12 +10,18 @@ public class Tile {
     private PlayerColor templeColor;
     private Piece piece;
 
-    public Tile(int x, int y) {
+    public Tile() {
+    }
+
+    @JsonCreator
+    public Tile(@JsonProperty("x") int x, @JsonProperty("y") int y) {
         this.x = x;
         this.y = y;
     }
 
-    public Tile(int x, int y, PlayerColor templeColor) {
+    @JsonCreator
+    public Tile(@JsonProperty("x") int x, @JsonProperty("y") int y,
+            @JsonProperty("templeColor") PlayerColor templeColor) {
         this.x = x;
         this.y = y;
         this.templeColor = templeColor;
@@ -36,6 +44,10 @@ public class Tile {
         piece.clearPosition();
         this.piece = null;
         return piece;
+    }
+
+    public boolean isTempleReached() {
+        return templeColor != null && piece != null && piece.getColor() != templeColor;
     }
 
     public Piece getPiece() {

@@ -1,10 +1,10 @@
 package com.example.springapi.model;
 
 import java.util.ArrayList;
-import java.util.UUID;
 
 import com.example.service.CardCreator;
-import com.example.springapi.model.Player.AiType;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.example.springapi.model.Player.PlayerColor;
 
 public class Game {
@@ -26,7 +26,11 @@ public class Game {
     private ArrayList<Piece> playerBluePieces;
     private Card nextCard;
 
-    public Game(String gameId) {
+    public Game() {
+    }
+
+    @JsonCreator
+    public Game(@JsonProperty("gameId") String gameId) {
         this.gameId = gameId;
         this.board = new Board();
         Card[] cards = CardCreator.getFiveRandomCards();
@@ -49,7 +53,8 @@ public class Game {
                 pieces.add(
                         new Piece(Piece.PieceType.MASTER, playerColor, playerColor == PlayerColor.RED ? "RM" : "BM"));
             } else {
-                pieces.add(new Piece(Piece.PieceType.STUDENT, playerColor, playerColor == PlayerColor.RED ? "R" : "B"));
+                pieces.add(new Piece(Piece.PieceType.STUDENT, playerColor,
+                        playerColor == PlayerColor.RED ? "R" + i : "B" + i));
             }
         }
         return pieces;

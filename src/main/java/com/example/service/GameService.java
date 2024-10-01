@@ -16,19 +16,19 @@ import com.example.exceptions.GameNotFoundException;
 import com.example.springapi.model.Board;
 import com.example.springapi.model.Game;
 import com.example.springapi.model.MoveObject;
+import com.example.springapi.model.Piece;
+import com.example.springapi.model.Piece.PieceType;
 import com.example.springapi.model.Player;
 import com.example.springapi.model.Game.GameState;
 import com.example.springapi.model.Player.AiType;
 import com.example.springapi.model.Player.PlayerColor;
+import com.example.springapi.model.Tile;
 
 @Service
 public class GameService {
 
     private HashMap<String, Game> games;
     private int gameIndex = 0;
-
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
 
     public GameService() {
         games = new HashMap<>();
@@ -90,6 +90,34 @@ public class GameService {
      */
 
     public boolean processMove(Game game, MoveObject move) {
+        PlayerColor playerColor = game.getCurrentPlayer().getColor();
+        Tile tile = game.getBoard().getTile(move.getPiece().getX(), move.getPiece().getY());
+        Tile targetTile = game.getBoard().getTile(move.getPiece().getX() + move.getMove().getX(playerColor),
+                move.getPiece().getY() + move.getMove().getY(playerColor));
+
+        boolean removedPieceWasMaster = false;
+
+        if (targetTile.getPiece() != null && targetTile.getPiece().getColor() != playerColor) {
+            if (playerColor == PlayerColor.RED) {
+                game.getPlayerBluePieces().remove(targetTile.getPiece());
+            } else {
+                game.getPlayerRedPieces().remove(targetTile.getPiece());
+            }
+            if (targetTile.getPiece().getType() == PieceType.MASTER) {
+                removedPieceWasMaster = true;
+            }
+            targetTile.removePiece();
+        } else if (targetTile.getPiece() != null && targetTile.getPiece().getColor() == playerColor) {
+            return false;
+        }
+
+        Piece piece = tile.removePiece();
+        targetTile.setPiece(piece);
+
+        if (targetTile.isTempleReached() || removedPieceWasMaster) {
+            game.setGameState(playerColor == PlayerColor.RED ? GameState.FINISHED : GameState.FINISHED);
+        }
+
         return true;
     }
 
@@ -97,8 +125,6 @@ public class GameService {
         game.setCurrentPlayer(game.getCurrentPlayer().getColor() == Player.PlayerColor.RED ? game.getPlayerBlue()
                 : game.getPlayerRed());
         game.setTurnStartTime(System.currentTimeMillis());
-
-        messagingTemplate.convertAndSend("/topic/game-state/" + game.getGameId(), game);
     }
 
     public void playAiMove(Game game) {
@@ -124,11 +150,6 @@ public class GameService {
     public boolean isPlayerTurn(String gameId, PlayerColor playerColor) {
         Game game = games.get(gameId);
         return game.getCurrentPlayer().getColor() == playerColor;
-    }
-
-    public boolean hasTimeExpired(Game game) {
-        long elapsedTime = System.currentTimeMillis() - game.getTurnStartTime();
-        return elapsedTime > 30000;
     }
 
     /*

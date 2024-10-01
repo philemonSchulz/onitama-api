@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +18,7 @@ import com.example.exceptions.GameNotFoundException;
 import com.example.service.GameService;
 import com.example.springapi.model.Game;
 import com.example.springapi.model.MoveObject;
+import com.example.springapi.model.Game.GameState;
 import com.example.springapi.model.Player.AiType;
 import com.example.springapi.model.Player.PlayerColor;
 
@@ -49,12 +51,30 @@ public class GameController {
     }
 
     @GetMapping("/{gameId}/state")
-    public ResponseEntity<Game> getGameState(@RequestParam String gameId) {
+    public ResponseEntity<Game> getGameState(@PathVariable String gameId) {
         Game game = gameService.getGameById(gameId);
         if (game != null) {
             return ResponseEntity.ok(game);
         }
         return ResponseEntity.badRequest().body(null);
+    }
+
+    @GetMapping("/{gameId}/isMyTurn/{playerColor}")
+    public ResponseEntity<Boolean> isMyTurn(@PathVariable String gameId, @PathVariable String playerColor) {
+        Game game = gameService.getGameById(gameId);
+        if (game != null) {
+            return ResponseEntity.ok(gameService.isPlayerTurn(gameId, PlayerColor.valueOf(playerColor)));
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{gameId}/isFinished")
+    public ResponseEntity<Boolean> isGameFinished(@PathVariable String gameId) {
+        Game game = gameService.getGameById(gameId);
+        if (game != null) {
+            return ResponseEntity.ok(game.getGameState() == GameState.FINISHED);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/list")
@@ -64,20 +84,16 @@ public class GameController {
     }
 
     @PostMapping("/{gameId}/move")
-    public ResponseEntity<String> submitMove(@PathVariable String gameId, @RequestParam MoveObject move,
-            @RequestParam String playerColor) {
+    public ResponseEntity<String> submitMove(@PathVariable String gameId, @RequestBody MoveObject move,
+            @RequestParam PlayerColor playerColor) {
         Game game = gameService.getGameById(gameId);
 
         if (game == null) {
             return ResponseEntity.status(404).body("Game not found.");
         }
 
-        if (!gameService.isPlayerTurn(gameId, PlayerColor.valueOf(playerColor))) {
+        if (!gameService.isPlayerTurn(gameId, playerColor)) {
             return ResponseEntity.status(403).body("It's not your turn.");
-        }
-
-        if (gameService.hasTimeExpired(game)) {
-            return ResponseEntity.status(408).body("Time has expired.");
         }
 
         boolean isValidMove = gameService.processMove(game, move);
@@ -88,6 +104,7 @@ public class GameController {
         gameService.switchTurn(game);
 
         if (game.getCurrentPlayer().isAi()) {
+            System.out.println("AI move");
             gameService.playAiMove(game);
         }
 

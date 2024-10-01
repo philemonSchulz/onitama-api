@@ -1,5 +1,8 @@
 package com.example.springapi.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Piece {
     public enum PieceType {
         STUDENT, MASTER
@@ -11,7 +14,12 @@ public class Piece {
     private Integer x;
     private Integer y;
 
-    public Piece(PieceType type, Player.PlayerColor color, String name) {
+    public Piece() {
+    }
+
+    @JsonCreator
+    public Piece(@JsonProperty("type") PieceType type, @JsonProperty("color") Player.PlayerColor color,
+            @JsonProperty("name") String name) {
         this.type = type;
         this.color = color;
         this.name = name;

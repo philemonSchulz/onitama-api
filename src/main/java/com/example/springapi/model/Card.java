@@ -3,13 +3,19 @@ package com.example.springapi.model;
 import java.util.HashSet;
 
 import com.example.springapi.model.Player.PlayerColor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Card {
     private HashSet<Move> moves;
     private String name;
     private PlayerColor color;
 
-    public Card(String name, PlayerColor color) {
+    public Card() {
+    }
+
+    @JsonCreator
+    public Card(@JsonProperty("name") String name, @JsonProperty("color") PlayerColor color) {
         this.name = name;
         this.color = color;
         this.moves = new HashSet<>();
