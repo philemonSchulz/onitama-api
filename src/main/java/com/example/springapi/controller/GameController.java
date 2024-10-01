@@ -63,6 +63,9 @@ public class GameController {
     public ResponseEntity<Boolean> isMyTurn(@PathVariable String gameId, @PathVariable String playerColor) {
         Game game = gameService.getGameById(gameId);
         if (game != null) {
+            if (game.getGameState() == GameState.WAITING_FOR_PLAYERS) {
+                return ResponseEntity.ok(false);
+            }
             return ResponseEntity.ok(gameService.isPlayerTurn(gameId, PlayerColor.valueOf(playerColor)));
         }
         return ResponseEntity.notFound().build();
