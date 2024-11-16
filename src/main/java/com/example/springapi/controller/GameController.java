@@ -127,7 +127,7 @@ public class GameController {
 
     }
 
-    @PostMapping("/{gameId}/getGameStateKonrad")
+    @PostMapping("/{gameId}/getLatestMove")
     public ResponseEntity<KonradStateObject> getKonradState(@PathVariable String gameId) {
         if (latesMoveObject != null) {
             KonradStateObject state = new KonradStateObject(latesMoveObject);
