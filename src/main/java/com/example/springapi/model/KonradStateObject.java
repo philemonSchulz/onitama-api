@@ -9,11 +9,11 @@ public class KonradStateObject {
     public KonradStateObject() {
     }
 
-    public KonradStateObject(int x, int y, int movementX, int movementY) {
-        this.x = x;
-        this.y = y;
-        this.movementX = movementX;
-        this.movementY = movementY;
+    public KonradStateObject(MoveObject moveObject) {
+        this.x = moveObject.getPiece().getX();
+        this.y = moveObject.getPiece().getY();
+        this.movementX = moveObject.getMove().getX(moveObject.getPiece().getColor());
+        this.movementY = moveObject.getMove().getY(moveObject.getPiece().getColor());
     }
 
     public int getX() {

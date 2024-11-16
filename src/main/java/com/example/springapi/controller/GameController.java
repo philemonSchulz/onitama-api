@@ -129,9 +129,8 @@ public class GameController {
 
     @PostMapping("/{gameId}/getGameStateKonrad")
     public ResponseEntity<KonradStateObject> getKonradState(@PathVariable String gameId) {
-        Game game = gameService.getGameById(gameId);
-        if (game != null) {
-            KonradStateObject state = new KonradStateObject();
+        if (latesMoveObject != null) {
+            KonradStateObject state = new KonradStateObject(latesMoveObject);
             return ResponseEntity.ok(state);
         }
         return ResponseEntity.badRequest().body(null);
