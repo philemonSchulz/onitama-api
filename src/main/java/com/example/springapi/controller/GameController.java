@@ -121,7 +121,7 @@ public class GameController {
     // First two cards are for Blue, second two are for Red, last one is the
     // additional card
     @PostMapping("/createGameKonrad")
-    public ResponseEntity<String> createGameKonrad(@RequestParam String[] cards) {
+    public ResponseEntity<String> createGameKonrad(@RequestParam("cards") String[] cards) {
         String gameId = gameService.createKonradGame(cards);
         return ResponseEntity.ok(gameId);
 
