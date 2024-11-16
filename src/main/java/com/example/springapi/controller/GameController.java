@@ -17,6 +17,7 @@ import com.example.exceptions.GameAlreadyStartedException;
 import com.example.exceptions.GameNotFoundException;
 import com.example.service.GameService;
 import com.example.springapi.model.Game;
+import com.example.springapi.model.KonradStateObject;
 import com.example.springapi.model.MoveObject;
 import com.example.springapi.model.Game.GameState;
 import com.example.springapi.model.Player.AiType;
@@ -28,6 +29,8 @@ public class GameController {
 
     @Autowired
     private GameService gameService;
+
+    private MoveObject latesMoveObject;
 
     @PostMapping("/create")
     public ResponseEntity<Game> createGame(@RequestParam(required = false) AiType aiType) {
@@ -105,6 +108,7 @@ public class GameController {
         }
 
         gameService.switchTurn(game);
+        this.latesMoveObject = move;
 
         if (game.getCurrentPlayer().isAi()) {
             System.out.println("AI move");
@@ -122,4 +126,16 @@ public class GameController {
         return ResponseEntity.ok(gameId);
 
     }
+
+    @PostMapping("/{gameId}/getGameStateKonrad")
+    public ResponseEntity<KonradStateObject> getKonradState(@PathVariable String gameId) {
+        Game game = gameService.getGameById(gameId);
+        if (game != null) {
+            KonradStateObject state = new KonradStateObject();
+            return ResponseEntity.ok(state);
+        }
+        return ResponseEntity.badRequest().body(null);
+
+    }
+
 }
