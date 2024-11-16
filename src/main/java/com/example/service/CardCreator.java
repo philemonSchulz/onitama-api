@@ -28,6 +28,20 @@ public class CardCreator {
         return randomCards;
     }
 
+    public static Card[] createCardsBasedOnNames(String[] cardNames) {
+        Card[] cards = createCards();
+        Card[] selectedCards = new Card[5];
+        for (int i = 0; i < 5; i++) {
+            for (Card card : cards) {
+                if (card.getName().equals(cardNames[i])) {
+                    selectedCards[i] = card;
+                    break;
+                }
+            }
+        }
+        return selectedCards;
+    }
+
     public static Card[] createCards() {
         Card[] cards = new Card[16];
         Card card = new Card("Hahn", PlayerColor.RED);

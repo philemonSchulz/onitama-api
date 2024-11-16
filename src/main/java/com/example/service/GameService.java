@@ -14,6 +14,7 @@ import com.example.aimodels.RandomAi;
 import com.example.exceptions.GameAlreadyStartedException;
 import com.example.exceptions.GameNotFoundException;
 import com.example.springapi.model.Board;
+import com.example.springapi.model.Card;
 import com.example.springapi.model.Game;
 import com.example.springapi.model.MoveObject;
 import com.example.springapi.model.Piece;
@@ -65,6 +66,33 @@ public class GameService {
         }
 
         return game;
+    }
+
+    public String createKonradGame(String[] cards) {
+        String gameId = "KonradGame" + gameIndex++;
+        Game game = new Game(gameId);
+        game.setPlayerRed(new Player(Player.PlayerColor.RED));
+        game.setPlayerBlue(new Player(Player.PlayerColor.BLUE));
+        game.setBeginTime(System.currentTimeMillis());
+        game.setGameState(GameState.WAITING_FOR_PLAYERS);
+
+        Card[] cardObjects = CardCreator.createCardsBasedOnNames(cards);
+        ArrayList<Card> playerRedCards = new ArrayList<>();
+        ArrayList<Card> playerBlueCards = new ArrayList<>();
+        playerBlueCards.add(cardObjects[0]);
+        playerBlueCards.add(cardObjects[1]);
+        playerRedCards.add(cardObjects[2]);
+        playerRedCards.add(cardObjects[3]);
+        game.setPlayerRedCards(playerRedCards);
+        game.setPlayerBlueCards(playerBlueCards);
+        game.setNextCard(cardObjects[4]);
+
+        game.setCurrentPlayer(cardObjects[4].getColor() == Player.PlayerColor.RED ? game.getPlayerRed()
+                : game.getPlayerBlue());
+
+        games.put(gameId, game);
+
+        return gameId;
     }
 
     public Game joinGame(String gameId) throws GameNotFoundException {
